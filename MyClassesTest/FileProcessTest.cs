@@ -11,10 +11,51 @@ namespace MyClassesTest
     {
         private const string BAD_FILE_NAME = "@C:\badFileName.bad";
         private string _GoodFileName;
+        public TestContext TestContext { get; set; }
 
+
+        #region ClassIntializeAndCleanup
+        [ClassInitialize]
+        public static void ClassIntialize(TestContext testContext)
+        {
+            testContext.WriteLine("In the Class Intialize Method");
+        }
+
+        [ClassCleanup]
+        public static void ClassCleanup()
+        {
+            
+        }
+
+        #endregion
+
+        #region TestInitializeAndCleanup
+        [TestInitialize]
+        public void TestInitialize()
+        {
+            if(TestContext.TestName == "FileNameDoesExist")
+            {
+                SetGoodFileName();
+                if (!string.IsNullOrEmpty(_GoodFileName))
+                {
+                    TestContext.WriteLine("Creating Good File"+ _GoodFileName);
+                    File.AppendAllText(_GoodFileName, "Some Text");
+                }
+            }
+        }
+        [TestCleanup]
+        public void TestCleanup()
+        {
+            if (TestContext.TestName == "FileNameDoesExist")
+            {
+                TestContext.WriteLine("Deleting test file: " + _GoodFileName);
+                File.Delete(_GoodFileName);
+            }
+        }
+        #endregion
         public void SetGoodFileName()
         {
-            _GoodFileName = ConfigurationSettings.AppSettings["GoodFileName"];
+            _GoodFileName = ConfigurationManager.AppSettings["GoodFileName"];
             if (_GoodFileName.Contains("[AppPath]"))
             {
                 _GoodFileName = _GoodFileName.Replace("[AppPath]",
@@ -24,11 +65,12 @@ namespace MyClassesTest
         [TestMethod]
         public void FileNameDoesExist()
         {
-            SetGoodFileName();
-            File.AppendAllText(_GoodFileName, "Some text");
+            
+            //File.AppendAllText(_GoodFileName, "Some text");
             FileProcess fp = new FileProcess();
-            bool fileDoesExist = fp.FileExists(@"C:\Windows\Regedit.exe");
-            File.Delete(_GoodFileName);
+            TestContext.WriteLine("Testing the file: " + _GoodFileName);
+            bool fileDoesExist = fp.FileExists(_GoodFileName);
+            //File.Delete(_GoodFileName);
 
             Assert.IsTrue(fileDoesExist);
         }
